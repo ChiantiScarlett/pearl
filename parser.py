@@ -1,6 +1,7 @@
 from pearl.core import PearlError, Clip
 import json
 from urllib.request import urlopen, URLError
+from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 
@@ -129,5 +130,57 @@ class CGV_Parser(Parser):
                                  start=st[:2] + ':' + st[2:],
                                  end=et[:2] + ':' + et[2:]
                                  )
+
+        return clip
+
+
+class LotCi_Parser(Parser):
+    def __init__(self):
+
+        location_table = json.loads(open('pearl/code_cgv.json').read())[0]
+        available_date_range = 6
+
+        super().__init__(location_table=location_table,
+                         available_date_range=available_date_range)
+
+    def parse(self, location, date, filter_key):
+        """
+        Description:
+            Overriding parent class method :: Parsing CGV Data
+        """
+        url = 'https://www.lottecinema.co.kr/LCWS/Ticketing/TicketingData.aspx'
+        param_list = {
+            'channelType': 'MW',
+            'osType': '',
+            'osVersion': '',
+            'MethodName': 'GetPlaySequence',
+            'playDate': '2018-04-25',
+            'representationMovieCode': '',
+            'cinemaID': '1|2|3024'
+        }
+
+        # 'TheaterID': '{}|{}|{}'.format(entry.get('DivisionCode'),
+        # entry.get('SortSequence'), entry.get('CinemaID')),
+
+        data = urlencode({'ParamList': json.dumps(param_list)}).encode('utf-8')
+        src = urlopen(url, data=data).read().decode('utf-8')
+        src = json.loads(src)
+
+        clip = Clip()
+
+        t_table = {}  # For saving movie Title based on its ID code
+        for movie in src['PlaySeqsHeader']['Items']:
+            t_table[movie['RepresentationMovieCode']] = movie['MovieNameKR']
+
+        for movie in src['PlaySeqs']['Items']:
+            clip += Clip(title=t_table[movie['RepresentationMovieCode']],
+                         cinfo='롯데시네마 ' + movie['CinemaNameKR'],
+                         hinfo=movie['ScreenNameKR'],
+                         avail_cap=(movie['TotalSeatCount'] -
+                                    movie['BookingSeatCount']),
+                         total_cap=movie['TotalSeatCount'],
+                         start=movie['StartTime'],
+                         end=movie['EndTime']
+                         )
 
         return clip
