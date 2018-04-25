@@ -16,6 +16,11 @@ class Parser:
     def search(self, location, date=None, filter_key=None):
         return self.parse(*self.assure_validity(location, date, filter_key))
 
+    def title_not_valid(self, title, filter_key):
+        if (filter_key or '') not in title:
+            return True
+        return False
+
     def parse(self, location, date, filter_key):
         """
         Override from child class
@@ -113,6 +118,11 @@ class CGV_Parser(Parser):
 
         for mv in src:
             TITLE = mv.find_all('strong')[0].text.strip()
+            # See if the movie title mathces title filter key.
+            # If not, do not include.
+            if self.title_not_valid(TITLE, filter_key):
+                continue
+
             # For each hall, get all info of movies
             for hall in mv.find_all('div', {'class': 'type-hall'}):
                 # get hall information
@@ -162,7 +172,7 @@ class LotCi_Parser(Parser):
             'representationMovieCode': '',
             'cinemaID': self._location_table[location]
         }
-
+        # Adding payload and parse json
         data = urlencode({'ParamList': json.dumps(param_list)}).encode('utf-8')
         src = urlopen(url, data=data).read().decode('utf-8')
         src = json.loads(src)
@@ -174,16 +184,51 @@ class LotCi_Parser(Parser):
             t_table[movie['RepresentationMovieCode']] = movie['MovieNameKR']
 
         for movie in src['PlaySeqs']['Items']:
-            clip += Clip(title=t_table[movie['RepresentationMovieCode']],
+            TITLE = t_table[movie['RepresentationMovieCode']]
+
+            # See if the movie title mathces title filter key.
+            # If not, do not include.
+            if self.title_not_valid(TITLE, filter_key):
+                continue
+
+            # Check 4D
+            if movie['FourDTypeCode'] == 200:
+                hall_info = '4D ' + movie['ScreenNameKR']
+            # Check 3D
+            elif movie['FilmCode'] == 300:
+                hall_info = '3D ' + movie['ScreenNameKR']
+            # Else 2D
+            else:
+                hall_info = '2D ' + movie['ScreenNameKR']
+
+            # Else, append clip
+            clip += Clip(title=TITLE,
                          cinfo='롯데시네마 ' + movie['CinemaNameKR'],
-                         hinfo=movie['ScreenNameKR'],
-                         avail_cap=(movie['TotalSeatCount'] -
-                                    movie['BookingSeatCount']),
+                         hinfo=hall_info,
+                         avail_cap=(movie['BookingSeatCount']),
                          total_cap=movie['TotalSeatCount'],
                          start=movie['StartTime'],
                          end=movie['EndTime']
                          )
 
+        return clip
+
+
+class Megabox_Parser:
+    def __init__(self):
+
+        location_table = json.loads(open('pearl/code_megabox.json').read())[0]
+        available_date_range = 6
+
+        super().__init__(location_table=location_table,
+                         available_date_range=available_date_range)
+
+    def parse(self, location, date, filter_key):
+        """
+        Description:
+            Overriding parent class method :: Parsing CGV Data
+        """
+        clip = Clip()
         return clip
 
 
