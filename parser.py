@@ -1,9 +1,11 @@
 from pearl.core import PearlError, Clip
 import json
-from urllib.request import urlopen, URLError
+import re
+from urllib.request import urlopen, URLError, quote
 from urllib.parse import urlencode
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
+import os
 
 
 class Parser:
@@ -41,7 +43,7 @@ class Parser:
 
         # Checking date validity:
         if date is None:
-            date = datetime.now().strftime("%d")
+            date = datetime.now()
         else:
             # Check if it is a valid date figure
             try:
@@ -58,6 +60,8 @@ class Parser:
                                  (datetime.now() +
                                   timedelta(days=x)).strftime("%d"),
                                  range(self._available_date_range))
+
+            # Variable `date` is 2-digit day.
             date = '%.2d' % date
 
             if date not in list(possible_dates):
@@ -65,6 +69,13 @@ class Parser:
                     'The timetable for the date `{}` is '.format(date) + \
                     ' not available at this moment.'
                 return self.raise_error(err_msg)
+
+            today = datetime.now()
+            # Check if the date is on next month.
+            if int(today.strftime('%d')) > int(date):
+                today += timedelta(months=1)
+
+            date = datetime.strptime(today.strftime('%Y%m') + date, '%Y%m%d')
 
         return (location, date, filter_key)
 
@@ -85,17 +96,10 @@ class CGV_Parser(Parser):
         """
 
         # Using bs4, parse necessary data (dirty parse)
-        today = int(datetime.now().strftime("%d"))
-        if int(date) < today:
-            date_arg = datetime.now() + timedelta(months=1)
-        else:
-            date_arg = datetime.now()
-
-        date_arg = date_arg.strftime('%Y%m') + date
         url = \
             'http://www.cgv.co.kr/common/showtimes/iframeTheater.aspx?' +\
             '{}&date={}'.format(
-                self._location_table[location], date_arg)
+                self._location_table[location], date.strftime("%Y%m%d"))
         try:
             src = BeautifulSoup(
                 urlopen(url).read().decode(), 'html.parser')
@@ -137,7 +141,7 @@ class CGV_Parser(Parser):
 class LotCi_Parser(Parser):
     def __init__(self):
 
-        location_table = json.loads(open('pearl/code_cgv.json').read())[0]
+        location_table = json.loads(open('pearl/code_lotci.json').read())[0]
         available_date_range = 6
 
         super().__init__(location_table=location_table,
@@ -154,13 +158,10 @@ class LotCi_Parser(Parser):
             'osType': '',
             'osVersion': '',
             'MethodName': 'GetPlaySequence',
-            'playDate': '2018-04-25',
+            'playDate': date.strftime("%Y-%m-%d"),
             'representationMovieCode': '',
-            'cinemaID': '1|2|3024'
+            'cinemaID': self._location_table[location]
         }
-
-        # 'TheaterID': '{}|{}|{}'.format(entry.get('DivisionCode'),
-        # entry.get('SortSequence'), entry.get('CinemaID')),
 
         data = urlencode({'ParamList': json.dumps(param_list)}).encode('utf-8')
         src = urlopen(url, data=data).read().decode('utf-8')
@@ -184,3 +185,101 @@ class LotCi_Parser(Parser):
                          )
 
         return clip
+
+
+class CodeParser:
+    _action = None
+    _theater = None
+    _filepath = None
+
+    def __init__(self, theater, filepath):
+
+        opts = {
+            'cgv': self.get_cgv_code,
+            'lotci': self.get_lotci_code,
+            'megabox': self.get_megabox_code
+        }
+
+        # If theater name is invalid, raise error
+        if str(theater).lower() not in opts.keys():
+            err = '`{}` is not a valid movie theater name.'
+            raise PearlError(err.format(theater))
+
+        # If filepath is invalid, raise error
+        try:
+            with open(filepath, 'w') as fp:
+                fp.write('')
+            os.remove(filepath)
+
+        except Exception:
+            raise PearlError('Failed to create `{}`.'.format(filepath))
+
+        self._theater = theater
+        self._filepath = filepath
+
+        self.parse = opts[str(theater)]
+
+    def get_cgv_code(self):
+        # get CGV JSON data
+        src = urlopen(
+            "http://www.cgv.co.kr/theaters/").read().decode('utf-8')
+        START_KEY = re.escape('[{"AreaTheaterDetailList":')
+        END_KEY = re.escape(';')
+        src = re.findall(START_KEY + "[\s\S]+?" + END_KEY, src)[0][:-1]
+        src = json.loads(src)
+
+        codes = {}
+        for area in src:
+            for item in area['AreaTheaterDetailList']:
+                # compare the keyword with names
+                name = item['TheaterName']
+                name = name[3:] if name.startswith("CGV") else name
+
+                codes[name] = 'areacode={}&theatercode={}'.format(
+                    quote(area['RegionCode']), quote(item['TheaterCode']))
+
+        with open(self._filepath, 'w', encoding='utf-8') as fp:
+            json.dump([codes], fp, ensure_ascii=False)
+
+        print('[*] Successfully created file `{}`.'.format(self._filepath))
+
+    def get_lotci_code(self):
+        url = 'https://www.lottecinema.co.kr/LCWS/Cinema/CinemaData.aspx'
+        param_list = {
+            'channelType': 'MW',
+            'osType': '',
+            'osVersion': '',
+            'MethodName': 'GetCinemaItems'
+        }
+
+        data = urlencode({'ParamList': json.dumps(param_list)}).encode('utf-8')
+        src = urlopen(url, data=data).read().decode('utf-8')
+        src = json.loads(src)
+
+        codes = {}
+
+        for theater in src['Cinemas']['Items']:
+            # Create cinema code
+            cinema_code = '{}|{}|{}'.format(
+                theater['DivisionCode'],
+                theater['SortSequence'],
+                theater['CinemaID']
+            )
+            # Remove parenthesis in theater names
+            name = re.sub(
+                re.escape('(') + "[\s\S]+?" + re.escape(')'),
+                '',
+                theater['CinemaNameKR'])
+            # Append. If there are identical names, keep the original.
+            if name in codes.keys():
+                pass
+            else:
+                codes[name] = cinema_code
+        # Save file into json format.
+        with open(self._filepath, 'w', encoding='utf-8') as fp:
+            json.dump([codes], fp, ensure_ascii=False)
+
+        print('[*] Successfully created file `{}`.'.format(self._filepath))
+
+    def get_megabox_code(self):
+        pass
