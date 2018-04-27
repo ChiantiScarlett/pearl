@@ -3,7 +3,8 @@ import json
 import re
 from urllib.request import urlopen, URLError, quote
 from urllib.parse import urlencode
-from bs4 import BeautifulSoup
+import requests
+from bs4 import BeautifulSoup as Soup
 from datetime import datetime, timedelta
 import os
 
@@ -106,8 +107,7 @@ class CGV_Parser(Parser):
             '{}&date={}'.format(
                 self._location_table[location], date.strftime("%Y%m%d"))
         try:
-            src = BeautifulSoup(
-                urlopen(url).read().decode(), 'html.parser')
+            src = Soup(urlopen(url).read().decode(), 'html.parser')
         except URLError:
             err_msg = 'Network Error : Please check your network status.'
             return self.raise_error(err_msg)
@@ -214,7 +214,7 @@ class LotCi_Parser(Parser):
         return clip
 
 
-class Megabox_Parser:
+class Megabox_Parser(Parser):
     def __init__(self):
 
         location_table = json.loads(open('pearl/code_megabox.json').read())[0]
@@ -228,7 +228,56 @@ class Megabox_Parser:
         Description:
             Overriding parent class method :: Parsing CGV Data
         """
+        import requests
+        from bs4 import BeautifulSoup as Soup
+
+        # Get POST Request
+        url = 'http://www.megabox.co.kr/pages/theater/Theater_Schedule.jsp'
+
+        req = requests.post(url, data={
+            'count': (date - datetime.today()).days + 1,
+            'cinema': self._location_table[location]})
+
+        src = Soup(req.text, 'html.parser')
+        src = src.find('table', {'class': 'movie_time_table'})
+
         clip = Clip()
+        # Title is getting overridden, due to its complex tr structure
+        title = None
+
+        for movie in src.find_all('tr', {'class': 'lineheight_80'}):
+            for mv in movie.find_all('th', {'id': 'th_theaterschedule_title'}):
+                if mv.find('a') is not None:
+                    title = mv.find('a').text
+
+            hall_name = movie.find('th', {'id': 'th_theaterschedule_room'})
+            hinfo = hall_name.find('div').text
+
+            for item in movie.find_all('div', {'class': 'cinema_time'}):
+                # Get hall info
+
+                # If the time is all sold out, skip
+                if 'done' in item.attrs['class']:
+                    continue
+
+                # Parse necessary data
+                time_data = item.find('span', {'class': 'hover_time'}).text
+                start, end = time_data.split('~')
+
+                seat_data = item.find('span', {'class': 'seat'}).text
+                avail_cap, total_cap = map(int, seat_data.split('/'))
+
+                # mtype = item.find('span', {'class': 'type'}).text
+
+                clip += Clip(title=title,
+                             cinfo='메가박스 ' + location,
+                             hinfo=hinfo,
+                             avail_cap=avail_cap,
+                             total_cap=total_cap,
+                             start=start,
+                             end=end
+                             )
+
         return clip
 
 
@@ -327,4 +376,42 @@ class CodeParser:
         print('[*] Successfully created file `{}`.'.format(self._filepath))
 
     def get_megabox_code(self):
-        pass
+
+        # Get region code
+        areaGroupCodes = []
+        soup = urlopen('http://www.megabox.co.kr/?menuId=theater')
+        soup = Soup(soup.read().decode('utf-8'), 'html.parser')
+
+        ul = soup.find('ul', {'class': 'menu'})
+        for li in ul.find_all('li')[1:]:
+            code = li.a['onclick'].split("'")[1]
+            areaGroupCodes.append(code)
+
+        # Dict to return
+        megabox_code = {}
+
+        # send POST Request and get response
+        for areacode in areaGroupCodes:
+            url = 'http://www.megabox.co.kr/DataProvider'
+            req = requests.post(url, data={
+                '_command': 'Cinema.getCinemasInRegion',
+                'siteCode': 36,
+                'areaGroupCode': areacode,
+                'reservationYn': 'N'})
+
+            data = json.loads(req.text)['cinemaList']
+
+            for item in data:
+                # Remove parenthesis in theater names
+                location_name = re.sub(
+                    re.escape('(') + "[\s\S]+?" + re.escape(')'),
+                    '',
+                    item['cinemaName'])
+
+                # Append
+                megabox_code[location_name] = item['cinemaCode']
+
+        with open(self._filepath, 'w', encoding='utf-8') as fp:
+            json.dump([megabox_code], fp, ensure_ascii=False)
+
+        print('[*] Successfully created file `{}`.'.format(self._filepath))
