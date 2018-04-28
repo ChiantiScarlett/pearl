@@ -109,13 +109,15 @@ class CGV_Parser(Parser):
         try:
             src = Soup(urlopen(url).read().decode(), 'html.parser')
         except URLError:
-            err_msg = 'Network Error : Please check your network status.'
-            return self.raise_error(err_msg)
+            err = 'Failed to CGV data. Please check your network status.'
+            raise PearlError(err)
 
         src = src.find_all('div', {'class': 'col-times'})
 
+        # Initialize empty clip
         clip = Clip()
 
+        # Fabricate
         for mv in src:
             TITLE = mv.find_all('strong')[0].text.strip()
             # See if the movie title mathces title filter key.
@@ -174,11 +176,17 @@ class LotCi_Parser(Parser):
         }
         # Adding payload and parse json
         data = urlencode({'ParamList': json.dumps(param_list)}).encode('utf-8')
-        src = urlopen(url, data=data).read().decode('utf-8')
-        src = json.loads(src)
+        try:
+            src = urlopen(url, data=data).read().decode('utf-8')
+            src = json.loads(src)
+        except URLError:
+            err = 'Failed to LotCi data. Please check your network status.'
+            raise PearlError(err)
 
+        # Initialize empty clip
         clip = Clip()
 
+        # Fabricate URL data
         t_table = {}  # For saving movie Title based on its ID code
         for movie in src['PlaySeqsHeader']['Items']:
             t_table[movie['RepresentationMovieCode']] = movie['MovieNameKR']
@@ -234,17 +242,24 @@ class Megabox_Parser(Parser):
         # Get POST Request
         url = 'http://www.megabox.co.kr/pages/theater/Theater_Schedule.jsp'
 
-        req = requests.post(url, data={
-            'count': (date - datetime.today()).days + 1,
-            'cinema': self._location_table[location]})
+        try:
+            req = requests.post(url, data={
+                'count': (date - datetime.today()).days + 1,
+                'cinema': self._location_table[location]})
 
-        src = Soup(req.text, 'html.parser')
-        src = src.find('table', {'class': 'movie_time_table'})
+            src = Soup(req.text, 'html.parser')
+            src = src.find('table', {'class': 'movie_time_table'})
+        except URLError:
+            err = 'Failed to Megabox data. Please check your network status.'
+            raise PearlError(err)
 
+        # Initialize empty clip
         clip = Clip()
-        # Title is getting overridden, due to its complex tr structure
+
+        # title is getting overridden, due to its complex <tr> structure
         title = None
 
+        # Fabricate
         for movie in src.find_all('tr', {'class': 'lineheight_80'}):
             for mv in movie.find_all('th', {'id': 'th_theaterschedule_title'}):
                 if mv.find('a') is not None:
