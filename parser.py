@@ -109,7 +109,7 @@ class CGV_Parser(Parser):
         try:
             src = Soup(urlopen(url).read().decode(), 'html.parser')
         except URLError:
-            err = 'Failed to CGV data. Please check your network status.'
+            err = 'Cannot parse CGV data. Please check your network status.'
             raise PearlError(err)
 
         src = src.find_all('div', {'class': 'col-times'})
@@ -180,7 +180,7 @@ class LotCi_Parser(Parser):
             src = urlopen(url, data=data).read().decode('utf-8')
             src = json.loads(src)
         except URLError:
-            err = 'Failed to LotCi data. Please check your network status.'
+            err = 'Cannot parse LotCi data. Please check your network status.'
             raise PearlError(err)
 
         # Initialize empty clip
@@ -250,7 +250,8 @@ class Megabox_Parser(Parser):
             src = Soup(req.text, 'html.parser')
             src = src.find('table', {'class': 'movie_time_table'})
         except URLError:
-            err = 'Failed to Megabox data. Please check your network status.'
+            err = 'Cannot parse Megabox data. ' + \
+                  'Please check your network status.'
             raise PearlError(err)
 
         # Initialize empty clip
@@ -430,3 +431,52 @@ class CodeParser:
             json.dump([megabox_code], fp, ensure_ascii=False)
 
         print('[*] Successfully created file `{}`.'.format(self._filepath))
+
+
+def parse_detail_info(limit=100):
+    # Parse movie detail info from kobis.or.kr
+    baseURL = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/" + \
+              "movie/searchMovieList.json?"
+    # Option for the request
+    opts = {
+        'key': '03de300d95f7573393586e64780fd59a',
+        'openEndDt': datetime.now().strftime('%Y'),
+        'openStartDt': int(datetime.now().strftime('%Y')) - 1,
+        'itemPerPage': limit
+    }
+
+    # Make opts into string
+    opts_list = []
+    for key in opts:
+        opts_list.append('{}={}'.format(key, opts[key]))
+
+    # Read json data, if fails, raise Error
+    try:
+        data = urlopen(baseURL + "&".join(opts_list))
+        data = json.loads(data.read().decode('utf-8'))
+        data = data['movieListResult']['movieList']
+    except URLError:
+        err = 'Cannot parse movie detail info. ' + \
+              'Please check your network status.'
+        raise PearlError(err)
+    # except Exception:
+    #     err = 'FATAL :: Cannot properly parse movie detail information. ' + \
+    #           'Please check the request parameter.'
+    #     raise PearlError(err)
+
+    # Fabricate data
+    movies = {}
+    for raw_info in data:
+        title = raw_info['movieNm']
+        info = {}
+        info['movieNameEN'] = raw_info['movieNmEn']
+        info['genre'] = raw_info['genreAlt']
+        info['nationality'] = raw_info['repNationNm']
+        info['openDate'] = datetime.strptime(raw_info['openDt'], "%Y%m%d")
+
+        directors = map(lambda x: x['peopleNm'], raw_info['directors'])
+        info['directors'] = ", ".join(list(directors))
+
+        movies[title] = info
+
+    return movies
