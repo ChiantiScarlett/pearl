@@ -125,6 +125,9 @@ class CGV_Parser(Parser):
             if self.title_not_valid(TITLE, filter_key):
                 continue
 
+            # Rate Table
+            r_table = {'청소': '19', '15': '15', '12': '12', '전체': 'ALL'}
+
             # For each hall, get all info of movies
             for hall in mv.find_all('div', {'class': 'type-hall'}):
                 # get hall information
@@ -132,6 +135,12 @@ class CGV_Parser(Parser):
                     hall.find_all('li')[1].text.strip()
 
                 TOTAL_SEATS = hall.find_all('li')[2].text[-5:-1].strip()
+
+                # Parse Rate
+                RATE = mv.find_all(
+                    'span', {'class': 'ico-grade'})[0].text.strip()[:2]
+                RATE = r_table[RATE] if RATE in r_table.keys() else RATE
+
                 # append each cinema info to CGV_Timetable class
                 for t in hall.find_all('a'):
                     st = t['data-playstarttime']
@@ -144,7 +153,8 @@ class CGV_Parser(Parser):
                                                int(t['data-seatremaincnt'])),
                                  total_cap=int(TOTAL_SEATS),
                                  start=st[:2] + ':' + st[2:],
-                                 end=et[:2] + ':' + et[2:]
+                                 end=et[:2] + ':' + et[2:],
+                                 rate=RATE
                                  )
 
         return clip
@@ -216,7 +226,8 @@ class LotCi_Parser(Parser):
                          avail_cap=(movie['BookingSeatCount']),
                          total_cap=movie['TotalSeatCount'],
                          start=movie['StartTime'],
-                         end=movie['EndTime']
+                         end=movie['EndTime'],
+                         rate=None
                          )
 
         return clip
@@ -291,7 +302,8 @@ class Megabox_Parser(Parser):
                              avail_cap=avail_cap,
                              total_cap=total_cap,
                              start=start,
-                             end=end
+                             end=end,
+                             rate=None
                              )
 
         return clip
@@ -433,16 +445,16 @@ class CodeParser:
         print('[*] Successfully created file `{}`.'.format(self._filepath))
 
 
-def parse_detail_info(limit=100):
+def get_detail(items=100, start_year=None, end_year=None):
     # Parse movie detail info from kobis.or.kr
     baseURL = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/" + \
               "movie/searchMovieList.json?"
     # Option for the request
     opts = {
         'key': '03de300d95f7573393586e64780fd59a',
-        'openEndDt': datetime.now().strftime('%Y'),
-        'openStartDt': int(datetime.now().strftime('%Y')) - 1,
-        'itemPerPage': limit
+        'openEndDt': start_year or datetime.now().strftime('%Y'),
+        'openStartDt': end_year or int(datetime.now().strftime('%Y')) - 1,
+        'itemPerPage': items
     }
 
     # Make opts into string
@@ -459,17 +471,17 @@ def parse_detail_info(limit=100):
         err = 'Cannot parse movie detail info. ' + \
               'Please check your network status.'
         raise PearlError(err)
-    # except Exception:
-    #     err = 'FATAL :: Cannot properly parse movie detail information. ' + \
-    #           'Please check the request parameter.'
-    #     raise PearlError(err)
+    except Exception:
+        err = 'Cannot parse movie detail info. ' + \
+              'Please check your request parameter.'
+        raise PearlError(err)
 
     # Fabricate data
     movies = {}
     for raw_info in data:
         title = raw_info['movieNm']
         info = {}
-        info['movieNameEN'] = raw_info['movieNmEn']
+        info['title_EN'] = raw_info['movieNmEn']
         info['genre'] = raw_info['genreAlt']
         info['nationality'] = raw_info['repNationNm']
         info['openDate'] = datetime.strptime(raw_info['openDt'], "%Y%m%d")

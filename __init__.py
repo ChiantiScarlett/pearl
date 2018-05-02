@@ -1,4 +1,5 @@
-from pearl.parser import CGV_Parser, LotCi_Parser, CodeParser, Megabox_Parser
+from pearl.parser import CGV_Parser, LotCi_Parser, Megabox_Parser, CodeParser
+from pearl.parser import get_detail as _get_detail
 
 
 def cgv(location=None, date=None, title=None):
@@ -19,3 +20,6 @@ def megabox(location=None, date=None, title=None):
 def parse_code(theater=None, filepath=None):
     parser = CodeParser(theater, filepath)
     parser.parse()
+
+
+get_detail = _get_detail

@@ -8,43 +8,53 @@ class Clip_Formatter:
         if type(clip) != Clip:
             err = '<Clip_Formatter> only receives <core.Clip> class.'
             raise PearlError(err)
-
-        self.movies = clip._data
+        self.clip = clip
 
     def print_clip(self):
+        # If the clip has not been sorted by title, raise PearlError
+        if not self.clip._is_sorted:
+            err = 'Cannot operate `print_clip` method.' + \
+                  'Please try <Clip>.sort() method before using it.'
+            raise PearlError(err)
+
         # Define frame
         top_frame = """
-{title} | {grade} {genre}"
+{title} | {detail_info}"
 ------------------------------------------------------
-"""
+""".strip()
         time_frame = """
 {start} - {end} | {avail_cap} / {total_cap} | {cinfo} ({hinfo})
-"""
+""".strip()
         bottom_frame = """
 ------------------------------------------------------
-"""
-        # Remove whitespaces on the end
-        top_frame = top_frame.strip()
-        time_frame = time_frame.strip()
-        bottom_frame = bottom_frame.strip()
+""".strip()
 
         # Set <list> type variable `frame`
         frame = []
 
         # Draw table by adding strings on `frame`
-        for movie in self.movies:
+        for movie in self.clip.data:
             # Add empty line
             frame.append('\n')
 
             # Colorize `TITLE` and draw top frame ::
             TITLE = \
                 Fore.LIGHTBLUE_EX + Style.BRIGHT + \
-                ' [' + movie + ']' + Style.RESET_ALL
+                ' [' + movie['title'] + ']' + Style.RESET_ALL
 
-            frame.append(top_frame.format(title=TITLE, grade=None, genre=None))
+            # Format Detail Info
+            detail_info = ''
+            if self.clip._contains_detail:
+                detail_info = """
+{genre} / {rate}
+""".strip()
+
+            frame.append(top_frame.format(
+                title=title,
+                detail_info=detail_info.format(**moive)))
 
             # Draw time frame ::
-            for sc in self.movies[movie]:
+            for sc in self.clip.data[movie]:
                 # Colorize `start`, and add additional whitespace at front
                 sc['start'] = \
                     Fore.LIGHTBLUE_EX + " " + sc['start'] + Style.RESET_ALL
