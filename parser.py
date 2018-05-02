@@ -11,31 +11,138 @@ import os
 
 class Parser:
     def __init__(self, location_table, available_date_range):
+        """
+        Description:
+            This class is fundamental basis for other parser modules,
+            including CGV_Parser, LotCi_Parser, and Megabox_Parser.
+
+            It basically has 3 stages, which are the followings:
+
+            1. User calls self.search()
+            2. `self.search()` judges the correctness of arguments by using
+               `self.assure_validity()`.
+            3. If the arguments are appropriate, this class then uses
+               `self.parse()`, which literally parses movie data from each
+               websites.
+
+            `self.parse()` is overriden by the child classes, but other than
+            that, CGV_Parser, LotCi_Parser, and Megabox_Parser shares the
+            same tools.
+
+        Arguments:
+            [Argument]            | [Type]  | [Description]
+            ------------------------------------------------------------------
+            location_table        | (dict)  | contains movie codes
+            available_date_range  | (int)   | set date limit for the data
+
+        Note:
+            i)   Although `location_table` reads <dict> type data, all other
+                 parsers read file that is already stored in here. If you want
+                 to debug or update the location_table, please take full
+                 advantage of the class `CodeParser`, which is defined on
+                 bottom of this page.
+
+            ii)  Argument `location_table` is constructed in the following
+                 format:
+
+                    {NAME_OF_LOATION : UNIQUE_ID_OF_LOCATION}
+
+                    e.g.
+                    CGV     : {"부천역" : "areacode=02&theatercode=0194", ... }
+                    LotCi   : {"시화" : "1|21|3016", ... }
+                    Megabox : {"안동" : "7601", ... }
+
+            iii) Currently `available_date_range` is set to 6 for every parsing
+                 module. If the user selects date that is longer than 6 days,
+                 the class will raise PearlError.
+
+            iv)  Please keep in mind that all of the `self.parser` methods hold
+                 nasty fabrication - meaning that any changes on the HTML might
+                 invoke fatal error.
+        """
         self._location_table = location_table
         self._available_date_range = available_date_range
 
     def search(self, location, date=None, filter_key=None):
+        """
+        Description:
+            Prime method :: This method receive arguments, pass to other
+            existing methods in this class, and returns data
+
+
+        """
         return self.parse(*self.assure_validity(location, date, filter_key))
 
     def title_not_valid(self, title, filter_key):
+        """
+        Description:
+            This method simply checks whether the input parameter `title`
+            is valid or not.
+
+        Returns:
+            i)  if valid: True
+            ii) if not:   False
+        """
         if (filter_key or '') not in title:
             return True
+
         return False
 
     def parse(self, location, date, filter_key):
         """
-        Override from child class
-        """
+        Description:
+            The arguments are identical, but each child class will override
+            with its own way of parsing movie theater data.
 
+        Arguments:
+            [Argument]           | [Type] | [Description]           | [Example]
+            ------------------------------------------------------------------
+            locations            | (str)  | Cinema location(s)      | '북수원'
+            date      (optional) | (int)  | day of the date (1~31)  | 8
+            title     (optional) | (str)  | filter out movie titles | '플레이어'
+
+        Note:
+            i)  Default value for the argument `date` is the day of
+                today's date.
+            ii) Movie data parsed from LotCi_Parser do not contain `rate` data.
+
+        Returns:
+            <Clip> Object
+
+            <Clip>.data is a list type variable that contains movie timelines
+            in following format:
+
+                self.list = [
+                    {
+                        'rate': '12',
+                        'timeline': [{
+                            'avail_cap': 216,
+                            'cinfo': 'CGV 수원',
+                            'end': '24:09',
+                            'hinfo': '2D 8관',
+                            'start': '21:30',
+                            'total_cap': 250
+                        },{
+                            'avail_cap': 235,
+                            'cinfo': 'CGV 수원',
+                            'end': '27:09',
+                            'hinfo': '2D 8관',
+                            'start': '24:30',
+                            'total_cap': 250
+                        }],
+                        'title': '어벤져스: 인피니티 워'
+                    }]
+        """
         pass
 
     def assure_validity(self, location, date, filter_key):
         """
         Description:
-            Method to check the validity of the parameters.
+            This method checks the validity of parameters.
+
         Returns:
-            if they are all valid, return (location, date, filter_key)
-            else, return False
+            i)  if they are all valid:  (location, date, filter_key)
+            ii) otherwise:              False
         """
 
         # Check if locations are valid
@@ -88,6 +195,11 @@ class Parser:
 
 class CGV_Parser(Parser):
     def __init__(self):
+        """
+        Description:
+            This module is a child class. Please refer to the parent module
+            for specific details.
+        """
 
         location_table = json.loads(open('pearl/code_cgv.json').read())[0]
         available_date_range = 6
@@ -162,6 +274,11 @@ class CGV_Parser(Parser):
 
 class LotCi_Parser(Parser):
     def __init__(self):
+        """
+        Description:
+            This module is a child class. Please refer to the parent module
+            for specific details.
+        """
 
         location_table = json.loads(open('pearl/code_lotci.json').read())[0]
         available_date_range = 6
@@ -235,6 +352,11 @@ class LotCi_Parser(Parser):
 
 class Megabox_Parser(Parser):
     def __init__(self):
+        """
+        Description:
+            This module is a child class. Please refer to the parent module
+            for specific details.
+        """
 
         location_table = json.loads(open('pearl/code_megabox.json').read())[0]
         available_date_range = 6
@@ -310,11 +432,28 @@ class Megabox_Parser(Parser):
 
 
 class CodeParser:
-    _action = None
-    _theater = None
-    _filepath = None
+    def __init__(self, theater, filename):
+        """
+        Description:
+            This class creates location_table, which is one of the prime
+            resources that is used for parsing movie data.
 
-    def __init__(self, theater, filepath):
+        Arguments:
+            [Argument]  | [Type] | [Description]
+            ------------------------------------------------------------------
+            theater     | (str)  | theater that you want to parse data from
+            filename    | (str)  | filename that you want to save your data
+
+        Note:
+            i)   Argument `theater` only accepts 'cgv', 'lotci', or 'megabox'.
+            ii)  Make sure you set the extension to `.json` for the `filename`.
+
+        Returns:
+            None
+
+            Instead, it creates file to certain directory, in accordance with
+            pre-defined filename.
+        """
 
         opts = {
             'cgv': self.get_cgv_code,
@@ -327,22 +466,28 @@ class CodeParser:
             err = '`{}` is not a valid movie theater name.'
             raise PearlError(err.format(theater))
 
-        # If filepath is invalid, raise error
+        # If filename is invalid, raise error
         try:
-            with open(filepath, 'w') as fp:
+            with open(filename, 'w') as fp:
                 fp.write('')
-            os.remove(filepath)
+            os.remove(filename)
 
         except Exception:
-            raise PearlError('Failed to create `{}`.'.format(filepath))
+            raise PearlError('Failed to create `{}`.'.format(filename))
 
+        # Create variables for global usage
         self._theater = theater
-        self._filepath = filepath
+        self._filename = filename
 
+        # Set `self.parse` method based on `theater` argument
         self.parse = opts[str(theater)]
 
     def get_cgv_code(self):
-        # get CGV JSON data
+        """
+        Description:
+            This method parses CGV theater code data, and creates
+            JSON type file.
+        """
         src = urlopen(
             "http://www.cgv.co.kr/theaters/").read().decode('utf-8')
         START_KEY = re.escape('[{"AreaTheaterDetailList":')
@@ -360,12 +505,17 @@ class CodeParser:
                 codes[name] = 'areacode={}&theatercode={}'.format(
                     quote(area['RegionCode']), quote(item['TheaterCode']))
 
-        with open(self._filepath, 'w', encoding='utf-8') as fp:
+        with open(self._filename, 'w', encoding='utf-8') as fp:
             json.dump([codes], fp, ensure_ascii=False)
 
-        print('[*] Successfully created file `{}`.'.format(self._filepath))
+        print('[*] Successfully created file `{}`.'.format(self._filename))
 
     def get_lotci_code(self):
+        """
+        Description:
+            This method parses Lotte Cinema theater code data, and creates
+            JSON type file.
+        """
         url = 'https://www.lottecinema.co.kr/LCWS/Cinema/CinemaData.aspx'
         param_list = {
             'channelType': 'MW',
@@ -398,12 +548,17 @@ class CodeParser:
             else:
                 codes[name] = cinema_code
         # Save file into json format.
-        with open(self._filepath, 'w', encoding='utf-8') as fp:
+        with open(self._filename, 'w', encoding='utf-8') as fp:
             json.dump([codes], fp, ensure_ascii=False)
 
-        print('[*] Successfully created file `{}`.'.format(self._filepath))
+        print('[*] Successfully created file `{}`.'.format(self._filename))
 
     def get_megabox_code(self):
+        """
+        Description:
+            This method parses Megabox code data, and creates
+            JSON type file.
+        """
 
         # Get region code
         areaGroupCodes = []
@@ -439,23 +594,76 @@ class CodeParser:
                 # Append
                 megabox_code[location_name] = item['cinemaCode']
 
-        with open(self._filepath, 'w', encoding='utf-8') as fp:
+        with open(self._filename, 'w', encoding='utf-8') as fp:
             json.dump([megabox_code], fp, ensure_ascii=False)
 
-        print('[*] Successfully created file `{}`.'.format(self._filepath))
+        print('[*] Successfully created file `{}`.'.format(self._filename))
 
 
 def get_detail(items=100, start_year=None, end_year=None):
+    """
+    Description:
+        This function is used for getting detail information of a movie.
+        It uses open API from KOBIS(영화진흥위원회, Korean Film Council),
+        according to the arguments.
+
+    Arguments:
+        [Argument]            | [Type] | [Description]
+        ------------------------------------------------------------------
+        items      (optional) | (str)  | maximum number of items
+        start_year (optional) | (int)  | filter specific start year
+        end_year   (optional) | (int)  | filter specific end year
+
+    Note:
+        i)   Argument `start_year` and `end_year` should be 4-digit integer.
+        ii)  Please keep in mind this open API is kind of slow, compared to
+             other paser modules.
+        iii) Since I had no other choice, I used API key with plain text here.
+             But if you are trying to get heavy data out of it, I strongly
+             recommend you to get your own key and read the full documents.
+             You can get free keys and more detailed documents from the below.
+
+             http://www.kobis.or.kr/kobisopenapi
+
+    Returns:
+        <dict>
+
+        Returns data with the following format:
+        e.g.
+        {
+            '기억의 밤': {
+                'directors': '장항준',
+                'genre': '미스터리,스릴러',
+                'nationality': '한국',
+                'openDate': datetime.datetime(2017, 11, 29, 0, 0),
+                'title_EN': 'Forgotten'
+            },
+            '독전': {
+                'directors': '이해영',
+                'genre': '범죄,액션',
+                'nationality': '한국',
+                'openDate': datetime.datetime(2018, 5, 22, 0, 0),
+                'title_EN': 'Believer'}
+            },
+            ...
+        }
+    """
+
     # Parse movie detail info from kobis.or.kr
     baseURL = "http://www.kobis.or.kr/kobisopenapi/webservice/rest/" + \
               "movie/searchMovieList.json?"
     # Option for the request
     opts = {
         'key': '03de300d95f7573393586e64780fd59a',
-        'openEndDt': start_year or datetime.now().strftime('%Y'),
+        'openEndDt': start_year or int(datetime.now().strftime('%Y')),
         'openStartDt': end_year or int(datetime.now().strftime('%Y')) - 1,
         'itemPerPage': items
     }
+
+    # Raise PearlError if the arg `start_year` or `end_year` is not int
+    if type(opts['openStartDt']) != int or type(opts['openEndDt']) != int:
+        err = 'Argument`start_year` or `end_year` must be <int> or <None>.'
+        raise PearlError(err)
 
     # Make opts into string
     opts_list = []
