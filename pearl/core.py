@@ -30,6 +30,15 @@ color_pack = {'C_B': Fore.LIGHTBLUE_EX,
 
 
 class PearlError(Exception):
+    """
+    Description:
+        This is custom error message that raises whenever something invalid
+        happens around the module.
+
+        If you see PearlError, it means that the thing is going within the
+        boundary, otherwise please report back so that I can fix the issue.
+    """
+
     def __init__(self, msg):
         self.msg = msg
         # Set custom exception handler for Exception printouts
@@ -63,6 +72,19 @@ class PearlError(Exception):
 
 
 class Clip:
+    """
+    Description:
+        This is a class that handles movie data. All of the parser classes
+        return this class type.
+
+        <Clip> can be addable with other <Clip> data. You can simply use `+`
+        operator to add. The actual movie data is stored in `self.data`.
+
+        There are two ways to see the data. One is by using `self.show()`,
+        which prints out movie data on console, and the other is
+        `self.to_json()`, which literally returns JSON type data.
+    """
+
     def __init__(self, *args, **kwargs):
         self.data = []
         self._is_sorted = False

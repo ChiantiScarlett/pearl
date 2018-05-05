@@ -255,8 +255,12 @@ class CGV_Parser(Parser):
 
                 # append each cinema info to CGV_Timetable class
                 for t in hall.find_all('a'):
-                    st = t['data-playstarttime']
-                    et = t['data-playendtime']
+                    try:
+                        st = t['data-playstarttime']
+                        et = t['data-playendtime']
+                    except Exception:
+                        # If the item does not have data-playstarttime, skip.
+                        continue
 
                     clip += Clip(title=TITLE,
                                  cinfo='CGV ' + location,
