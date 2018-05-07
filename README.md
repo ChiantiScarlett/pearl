@@ -1,4 +1,4 @@
-![Pearl Screenshot]("https://github.com/ChiantiShiina/pearl/blob/develop/sample.png")
+![Alt text](sample.png?raw=true "Pearl")
 
 # Pearl
 
@@ -19,12 +19,16 @@ or you can manually download the wheel file from [here](https://pypi.org/project
 
 ## Quick Example
 
+<br>
+
 ### Printing out time schedule on a console screen:
 
 ```python
 from pearl import lotci
 lotci('수원', date=9).show()
 ```
+
+<br>
 
 ### Receiving time schedule data in JSON
 
@@ -33,9 +37,11 @@ from pearl import cgv
 data = cgv('북수원', date=21).to_json()
 ```
 
-
+<br><br>
 
 ## Usage and Description
+
+<br>
 
 ### Abstract
 
@@ -47,6 +53,7 @@ These are the functions that you can use with the module pearl:
 - pearl.`get_detail(items=100, start_year=None, end_year=None)`
 - pearl.`parse_code(theater, filepath)`
 
+<br>
 
 ### pearl.cgv, pearl.lotci, pearl.megabox
 
@@ -95,6 +102,7 @@ def cgv(location, date=None, title=None):
     """
 ```
 
+<br>
 
 ### Adding <Clip> objects
 
@@ -106,7 +114,7 @@ from pearl import cgv, lotci, megabox
 data = (cgv('북수원') + lotci.cgv('수원') + megabox('수원')).to_json()
 ```
 
-
+<br><br>
 
 ## Built With
 
@@ -114,16 +122,18 @@ data = (cgv('북수원') + lotci.cgv('수원') + megabox('수원')).to_json()
 * [Google Chrome Developer Tools](https://maven.apache.org/) - Testing and tracing appropriate data
 * [Python3.5.2](https://rometools.github.io/rome/) - Main version, ran on Linux Mint 18.3.
 
-
+<br><br>
 
 ## Authors
 
 * **Chianti Shiina** - *Initial work* - [Pearl](https://github.com/ChiantiShiina/pearl)
 
-
+<br><br>
 
 ## Acknowledgments
 
 * Inspired by the article [챗봇 만들기 — 영화 상영관 찾기](https://medium.com/bothub-studio-ko/%EC%B1%97%EB%B4%87-%EB%A7%8C%EB%93%A4%EA%B8%B0-%EC%98%81%ED%99%94-%EC%83%81%EC%98%81%EA%B4%80-%EC%B0%BE%EA%B8%B0-ec9bbff353d8)
 * Using the movie detail info from KOBIS. You can get the official open API from [here](http://www.kobis.or.kr/kobisopenapi/).
 * Special acknowledgment to the Starbucks, for providing perfect circumstance of writing these codes.
+
+<br>
