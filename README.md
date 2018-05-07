@@ -135,7 +135,7 @@ Appreciate any bug reports or improvements.
 
 ## Author :: Chianti Shiina
 
-![Profile](https://secure.gravatar.com/avatar/cfbdcf8a254e3230621e8577619c6941?s=150)
+![Profile](https://secure.gravatar.com/avatar/cfbdcf8a254e3230621e8577619c6941?s=200)
 
 - Keybase:  [/ChiantiShiina](https://keybase.io/chiantishiina)
 - GMail:    chianti.shiina@gmail.com
