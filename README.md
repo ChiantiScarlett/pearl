@@ -9,9 +9,11 @@
 <br>
 You can install pearl with pip
 <br>
-```
+
+```plain
 $ pip install chianti-pearl
 ```
+
 <br>
 or you can manually download the wheel file from [here](https://pypi.org/project/chianti-pearl/#files).
 <br>
