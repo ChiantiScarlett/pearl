@@ -82,7 +82,8 @@ class Clip:
 
         There are two ways to see the data. One is by using `self.show()`,
         which prints out movie data on console, and the other is
-        `self.to_json()`, which literally returns JSON type data.
+        `self.to_json()` or `self.to_list()`, which literally returns
+        JSON data and <list> type data accordingly.
     """
 
     def __init__(self, *args, **kwargs):
@@ -114,41 +115,35 @@ class Clip:
     def to_json(self):
         return json.dumps(self.data)
 
+    def to_list(self):
+        return self.data
+
     def sort(self):
         # Sort item by ascending order
         self.data = sorted(self.data, key=lambda k: k['title'])
 
         # Within iteration, re-format previous data
-        movies = []
-        title = None
-        mv = None
+        raw_movies = {}
+        for title in map(lambda x: x['title'], self.data):
+            raw_movies[title] = []
+
         for movie in self.data:
-            if movie['title'] != title:
-                movies.append(mv)
+            raw_movies[movie['title']].append(movie)
 
-                title = movie.pop('title')
-                rate = movie.pop('rate')
+        movies = []
+        for movie in raw_movies.values():
+            mv = {
+                'title': movie[0]['title'],
+                'rate': None,
+                'timeline': []
+            }
+            for timeline in movie:
+                timeline.pop('title')
+                mv['rate'] = timeline.pop('rate') or mv['rate']
+                mv['timeline'].append(timeline)
 
-                mv = {
-                    'title': title,
-                    'rate': rate,
-                    'timeline': [movie]
-                }
-            else:
-                # Pop title and rate
-                movie.pop('title')
-                rate = movie.pop('rate')
-                # Update rate if not None
-                mv['rate'] = rate or mv['rate']
-                mv['timeline'].append(movie)
+            movies.append(mv)
 
-        # Pop the first item, because it is `None`
-        movies.pop(0)
-
-        # Sort timeline in ascending order for every movie
-        for movie in movies:
-            tl = movie['timeline']
-            movie['timeline'] = sorted(tl, key=lambda k: k['start'])
         # Disable __add__ method with other Clip classes
         self._is_sorted = True
 
@@ -186,7 +181,6 @@ class Clip:
 
             # Set flag `True`
             self._contains_detail = True
-
         for movie in self.data:
             rate = movie['rate']
             if rate == 'ALL':

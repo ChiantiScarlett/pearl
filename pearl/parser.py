@@ -402,6 +402,8 @@ class Megabox_Parser(Parser):
             for mv in movie.find_all('th', {'id': 'th_theaterschedule_title'}):
                 if mv.find('a') is not None:
                     title = mv.find('a').text
+                    if self.title_not_valid(title, filter_key):
+                        continue
 
             hall_name = movie.find('th', {'id': 'th_theaterschedule_room'})
             hinfo = hall_name.find('div').text
