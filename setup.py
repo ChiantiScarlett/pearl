@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(name='chianti-pearl',
       description='A module that can parse Korean movie theater data, including CGV, Lotte Cinema, and Megabox.',
-      version='1.0.1',
+      version='1.0.3',
       url='https://github.com/chiantishiina/pearl',
       author='Chianti Shiina',
       author_email='chianti.shiina@gmail.com',
