@@ -2,18 +2,18 @@
 
 # Pearl
 
-A simple module that parses data from Korean movie theaters.
+> A simple module that parses Korean cinema schedules.
 
 
 ## Installation
 
-You can install pearl with pip
+You can get the latest version of `pearl` using pip:
 
 ```
 $ pip install chianti-pearl
 ```
 
-or you can manually download the wheel file from [here](https://pypi.org/project/chianti-pearl/#files).
+or you can manually download the wheel file from [here](https://pypi.org/project/chianti-pearl/#files) as well.
 
 <br><br><br>
 
