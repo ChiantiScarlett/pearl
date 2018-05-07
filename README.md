@@ -1,56 +1,60 @@
+[!Alt Sample]("./sample.png")
+
 # Pearl
 
 A simple module that parses data from Korean movie theaters.
 
 
-## Getting Started
+## Installation
 
-[/]
-
-### Prerequisites
-
-You need to install colorama in order to print out on your console. You can do this by using pip:
-
+You can install pearl with pip
 
 ```
-# on Linux
-sudo pip3 install colorama
-
-# on Windows
-pip install colorama
+$ pip install chianti-pearl
 ```
 
-### Installing
+or you can manually download the wheel file from [here](https://pypi.org/project/chianti-pearl/#files).
 
-[/]
 
-## Usage
+## Quick Example
 
-Basically there are two ways you can get data. One is by the .show() method (which is designed for using on the interactive mode), and the other is .to_json() method, literally returning JSON data.
-
-Since this module was envisaged for variety of users' taste, you can add, put options, or gather
-
-There are four different major functions that you can use, which are
-
-```
-pearl.cgv(location, date=None, title=None)
-pearl.lotci(location, data=None, title=None)
-pearl.megabox(location, data=None, title=None)
-pearl.get_detail(items=100, start_year=None, end_year=None)
-```
-
+### Printing out time schedule on a console screen:
 
 ```python
-from pearl import cgv, lotci, megabox
+from pearl import lotci
+lotci('수원', date=9).show()
 ```
 
+### Receiving time schedule data in JSON
+
 ```python
+from pearl import cgv
+data = cgv('북수원', date=21).to_json()
+```
+
+
+
+## Usage and Description
+
+### Abstract
+
+These are the functions that you can use with the module pearl:
+
+- pearl.`cgv(location, date=None, title=None)`
+- pearl.`lotci(location, data=None, title=None)`
+- pearl.`megabox(location, data=None, title=None)`
+- pearl.`get_detail(items=100, start_year=None, end_year=None)`
+- pearl.`parse_code(theater, filepath)`
+
+
+### pearl.cgv, pearl.lotci, pearl.megabox
+
+`cgv`, `lotci`, and `megabox` takes same parameters.
+
+
+```
 def cgv(location, date=None, title=None):
     """
-    Description:
-        This function parses data from CGV
-        (www.cgv.co.kr)
-
     Args:
         [Argument]           | [Type] | [Description]           | [Example]
         ------------------------------------------------------------------
@@ -88,75 +92,37 @@ def cgv(location, date=None, title=None):
                     'title': '어벤져스: 인피니티 워'
                 }]
     """
-
-
-def lotci(location, date=None, title=None):
-    """
-    Description:
-        This function parses data from Lotte Cinema(롯데시네마)
-        (www.lottecinema.co.kr/)
-
-    Args, Returns -> identical to self.cgv()
-
-    """
-
-
-def megabox(location, date=None, title=None):
-    """
-    Description:
-        This function parses data from Megabox(메가박스)
-        (www.megabox.co.kr/)
-
-    Args, Returns -> identical to self.cgv()
-
-    """
-
-def parse_code(theater, filepath):
 ```
 
-### Basic Example
 
+### Adding <Clip> objects
 
+ pearl.cgv, pearl.lotci, and pearl.megabox returns a &lt;Clip&gt; class object. &lt;Clip&gt; **is addable with other &lt;Clip&gt; objects**. This means that you can also do something like the below.
 
-### Basic Usage
-
-Basically you can get data in two ways. One is to show on the terminal screen, the other is to receive data as a JSON format.
-
-#### Print data on terminal :: show()
 
 ```python
-from pearl import cgv
-
-cgv('북수원').show()
+from pearl import cgv, lotci, megabox
+data = (cgv('북수원') + lotci.cgv('수원') + megabox('수원')).to_json()
 ```
 
-#### Return JSON data :: to_json()
 
-```python
-from pearl import lotci
-
-data = lotci('북수원').to_json()
-```
-
-#### Adding 
-[/]
 
 ## Built With
 
 * [Sublime Text3](http://www.dropwizard.io/1.0.2/docs/) - Awesome text editor that I use every day :D
-* [Google Chrome Developer Tools](https://maven.apache.org/) - Testing and tracking appropriate data
-* [Python3.5.2](https://rometools.github.io/rome/) - Main version, ran on Linux Mint 18.3
+* [Google Chrome Developer Tools](https://maven.apache.org/) - Testing and tracing appropriate data
+* [Python3.5.2](https://rometools.github.io/rome/) - Main version, ran on Linux Mint 18.3.
+
+
 
 ## Authors
 
 * **Chianti Shiina** - *Initial work* - [Pearl](https://github.com/ChiantiShiina/pearl)
 
-## License
 
-This project is licensed under the MIT License.
 
 ## Acknowledgments
 
 * Inspired by the article [챗봇 만들기 — 영화 상영관 찾기](https://medium.com/bothub-studio-ko/%EC%B1%97%EB%B4%87-%EB%A7%8C%EB%93%A4%EA%B8%B0-%EC%98%81%ED%99%94-%EC%83%81%EC%98%81%EA%B4%80-%EC%B0%BE%EA%B8%B0-ec9bbff353d8)
-* Detail movie information was from KOBIS(), and you can easily get the open API from [here](http://www.kobis.or.kr/kobisopenapi/).
-* Special acknowledgment to my coffee mug.
+* Using the movie detail info from KOBIS. You can get the official open API from [here](http://www.kobis.or.kr/kobisopenapi/).
+* Special acknowledgment to the Starbucks, for providing perfect circumstance of writing these codes.
