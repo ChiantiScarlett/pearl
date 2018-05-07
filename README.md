@@ -1,9 +1,10 @@
-![Alt text](sample.png?raw=true "Pearl")
+![Alt text](images/sample.png?raw=true "Pearl")
 
 # Pearl
 
 > A simple module that parses Korean cinema schedules.
 
+<br><br><br>
 
 ## Installation
 
@@ -106,7 +107,7 @@ def cgv(location, date=None, title=None):
 
 ### Adding <Clip> objects
 
- pearl.cgv, pearl.lotci, and pearl.megabox returns a &lt;Clip&gt; class object. &lt;Clip&gt; **is addable with other &lt;Clip&gt; objects**. This means that you can also do something like the below.
+ pearl.cgv, pearl.lotci, and pearl.megabox returns a &lt;Clip&gt; class object. **&lt;Clip&gt; is addable with other &lt;Clip&gt; objects**. This means that you can also do something like the below.
 
 
 ```python
@@ -124,16 +125,30 @@ data = (cgv('북수원') + lotci.cgv('수원') + megabox('수원')).to_json()
 
 <br><br>
 
-## Authors
+## Notes
 
-* **Chianti Shiina** - *Initial work* - [Pearl](https://github.com/ChiantiShiina/pearl)
+I do not claim any ownership of the movie data that was parsed with the cinemas, and these are for personal use only. Other than that, I do not mind anyone peeking through the code or tweaking around the module.
+
+Appreciate any bug reports or improvements.
+
+<br><br>
+
+## Author :: Chianti Shiina
+
+![Profile](https://secure.gravatar.com/avatar/cfbdcf8a254e3230621e8577619c6941?s=300)
+
+- Keybase:  [/ChiantiShiina](https://keybase.io/chiantishiina)
+- GMail:    chianti.shiina@gmail.com
+- Telegram: [@ChiantiShiina](https://t.me/chiantishiina)
+- Mastodon: [@ChiantiShiina][https://mastodon.social/@ChiantiShiina]
+- Blog:     [chianti.shiina.io](https://chianti.shiina.io)
 
 <br><br>
 
 ## Acknowledgments
 
-* Inspired by the article [챗봇 만들기 — 영화 상영관 찾기](https://medium.com/bothub-studio-ko/%EC%B1%97%EB%B4%87-%EB%A7%8C%EB%93%A4%EA%B8%B0-%EC%98%81%ED%99%94-%EC%83%81%EC%98%81%EA%B4%80-%EC%B0%BE%EA%B8%B0-ec9bbff353d8)
-* Using the movie detail info from KOBIS. You can get the official open API from [here](http://www.kobis.or.kr/kobisopenapi/).
-* Special acknowledgment to the Starbucks, for providing perfect circumstance of writing these codes.
+* Gained a lot of information from [this article](https://medium.com/bothub-studio-ko/%EC%B1%97%EB%B4%87-%EB%A7%8C%EB%93%A4%EA%B8%B0-%EC%98%81%ED%99%94-%EC%83%81%EC%98%81%EA%B4%80-%EC%B0%BE%EA%B8%B0-ec9bbff353d8).
+* This module uses movie info that were brought up from KOBIS. You can get the official open API from [here](http://www.kobis.or.kr/kobisopenapi/).
+* Special thanks to Starbucks, for providing perfect circumstance to write these codes during the weekends.
 
 <br>
