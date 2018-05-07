@@ -135,12 +135,12 @@ Appreciate any bug reports or improvements.
 
 ## Author :: Chianti Shiina
 
-![Profile](https://secure.gravatar.com/avatar/cfbdcf8a254e3230621e8577619c6941?s=200)
+![Profile](https://secure.gravatar.com/avatar/cfbdcf8a254e3230621e8577619c6941?s=150)
 
 - Keybase:  [/ChiantiShiina](https://keybase.io/chiantishiina)
 - GMail:    chianti.shiina@gmail.com
 - Telegram: [@ChiantiShiina](https://t.me/chiantishiina)
-- Mastodon: [@ChiantiShiina][https://mastodon.social/@ChiantiShiina]
+- Mastodon: [@ChiantiShiina](https://mastodon.social/@ChiantiShiina)
 - Blog:     [chianti.shiina.io](https://chianti.shiina.io)
 
 <br><br>
