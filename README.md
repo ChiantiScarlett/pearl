@@ -22,7 +22,7 @@ or you can manually download the wheel file from [here](https://pypi.org/project
 
 <br>
 
-### Printing out time schedule on a console screen:
+### Printing out time schedule on a console screen
 
 ```python
 from pearl import lotci
@@ -38,6 +38,15 @@ from pearl import cgv
 data = cgv('북수원', date=21).to_json()
 ```
 
+<br>
+
+### Receiving time schedule data in <list> type
+
+```python
+from pearl import cgv
+data = cgv('북수원', date=21).to_list()
+```
+
 <br><br>
 
 ## Usage and Description
@@ -48,11 +57,11 @@ data = cgv('북수원', date=21).to_json()
 
 These are the functions that you can use with the module pearl:
 
-- pearl.`cgv(location, date=None, title=None)`
-- pearl.`lotci(location, data=None, title=None)`
-- pearl.`megabox(location, data=None, title=None)`
-- pearl.`get_detail(items=100, start_year=None, end_year=None)`
-- pearl.`parse_code(theater, filepath)`
+- `pearl.cgv(location, date=None, title=None)`
+- `pearl.lotci(location, data=None, title=None)`
+- `pearl.megabox(location, data=None, title=None)`
+- `pearl.get_detail(items=100, start_year=None, end_year=None)`
+- `pearl.parse_code(theater, filepath)`
 
 <br>
 
