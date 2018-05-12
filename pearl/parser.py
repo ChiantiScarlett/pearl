@@ -9,6 +9,36 @@ from datetime import datetime, timedelta
 import os
 
 
+def available_location(cinema):
+    """
+    Description:
+        This function returns available location argument for the function
+        cgv, lotci, and megabox.
+
+    Arguments:
+        [Argument] | [Type] | [Description]
+        ------------------------------------------------------------------
+        cinema     | (str)  | name of the cinema you want to parse from
+
+    Returns:
+        Tuple() type of location values.
+
+        e.g.
+        ['경산하양', '신촌', '덕천', 'ARTNINE', '대구신세계', ... ]
+    """
+    if str(cinema).lower() not in ['lotci', 'cgv', 'megabox']:
+        err = 'Argument `cinema` should be either `lotci`, `cgv`, `megabox`.'
+        raise PearlError(err)
+
+    l_table = {
+        'lotci': LOTCI_CODE,
+        'cgv': CGV_CODE,
+        'megabox': MEGABOX_CODE
+    }
+
+    return list(l_table[cinema].keys())
+
+
 class Parser:
     def __init__(self, location_table, available_date_range):
         """
@@ -151,8 +181,9 @@ class Parser:
             raise PearlError(err)
 
         elif location not in self._location_table.keys():
-            err = '{} is not a valid location name.'.format(self.location)
-            raise PearlError(err)
+            err = 'Invalid location name `{}`. '.format(location)
+            err += 'Use `available_location(cinema)` to get all keys.'
+            raise PearlError(err.format(location))
 
         # Checking date validity:
         if date is None:
@@ -623,7 +654,7 @@ def get_detail(items=100, start_year=None, end_year=None):
     Note:
         i)   Argument `start_year` and `end_year` should be 4-digit integer.
         ii)  Please keep in mind this open API is kind of slow, compared to
-             other paser modules.
+             other parser modules.
         iii) Since I had no other choice, I used API key with plain text here.
              But if you are trying to get heavy data out of it, I strongly
              recommend you to get your own key and read the full documents.
