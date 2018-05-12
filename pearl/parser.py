@@ -209,10 +209,10 @@ class Parser:
             date = '%.2d' % date
 
             if date not in list(possible_dates):
-                err_msg = \
+                err = \
                     'The timetable for the date `{}` is '.format(date) + \
                     ' not available at this moment.'
-                return self.raise_error(err_msg)
+                raise PearlError(err)
 
             today = datetime.now()
             # Check if the date is on next month.
